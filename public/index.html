@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抽卡游戏</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✨ 幻想抽卡 ✨</h1>
+            <div class="user-info">
+                <span class="currency">💎 抽卡券: <span id="tickets">100</span></span>
+            </div>
+        </header>
+
+        <main>
+            <div class="gacha-section">
+                <div class="banner">
+                    <h2>限定卡池</h2>
+                    <div class="rates">
+                        <span class="rate-item ssr">SSR: 1.8%</span>
+                        <span class="rate-item sr">SR: 20.4%</span>
+                        <span class="rate-item r">R: 65%</span>
+                        <span class="rate-item n">N: 35%</span>
+                    </div>
+                </div>
+
+                <div class="draw-buttons">
+                    <button class="draw-btn single" onclick="draw(1)">
+                        <span class="btn-text">单抽</span>
+                        <span class="btn-cost">💎 1</span>
+                    </button>
+                    <button class="draw-btn multi" onclick="draw(10)">
+                        <span class="btn-text">十连抽</span>
+                        <span class="btn-cost">💎 10</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="results-section" id="results">
+                <h3>抽卡结果</h3>
+                <div class="cards-container" id="cardsContainer">
+                    <p class="no-results">点击按钮开始抽卡！</p>
+                </div>
+            </div>
+
+            <div class="collection-section">
+                <h3>我的收藏</h3>
+                <div class="collection-grid" id="collection">
+                    <p class="no-collection">暂无收藏</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>恭喜获得</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <button class="confirm-btn" onclick="closeModal()">确认</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
