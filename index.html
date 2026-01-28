@@ -1,0 +1,3048 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <title>抽卡游戏</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow-x: hidden;
+            min-height: 100vh;
+            padding: 20px;
+            width: 100%;
+            max-width: 100vw;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        header {
+            position: relative;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            padding-right: 60px; /* 为右上角的重置按钮留出空间 */
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .version {
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 5px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .version:hover {
+            color: #667eea;
+            text-decoration: underline;
+        }
+
+        .user-info {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .currency {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        main {
+            display: grid;
+            gap: 30px;
+        }
+
+        .gacha-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .banner {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .banner h2 {
+            color: #764ba2;
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        /* 让JavaScript完全控制网格布局 */
+        .rates {
+            display: grid;
+            gap: 6px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            padding: 0 5px;
+        }
+
+        /* 大屏幕：增加gap */
+        @media (min-width: 600px) {
+            .rates {
+                gap: 10px;
+                padding: 0;
+            }
+        }
+
+        .rate-item {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85em;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .rate-item.ssr {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .rate-item.sr {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(161, 140, 209, 0.4);
+        }
+
+        .rate-item.r {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(132, 250, 176, 0.4);
+        }
+
+        .rate-item.n {
+            background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(176, 176, 176, 0.4);
+        }
+
+        /* 移动优先：默认垂直堆叠 */
+        .draw-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            padding: 0 5px;
+        }
+
+        /* 大屏幕：水平排列 */
+        @media (min-width: 600px) {
+            .draw-buttons {
+                flex-direction: row;
+                gap: 15px;
+                padding: 0;
+            }
+        }
+
+        /* 移动优先：按钮占满宽度 */
+        .draw-btn {
+            flex: 1;
+            width: 100%;
+            max-width: 100%;
+            padding: 14px 15px;
+            font-size: 1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .draw-btn.single {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 大屏幕：按钮恢复列式布局 */
+        @media (min-width: 600px) {
+            .draw-btn {
+                max-width: 250px;
+                padding: 18px 20px;
+                font-size: 1.1em;
+                flex-direction: column;
+            }
+        }
+
+        .draw-btn.multi {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 8px 20px rgba(240, 147, 251, 0.4);
+        }
+
+        .draw-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .draw-btn:active {
+            transform: translateY(0);
+        }
+
+        .draw-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-cost {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .gacha-section, .results-section, .collection-section, .stats-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .results-section h3, .collection-section h3, .stats-section h3 {
+            color: #764ba2;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .cards-container, .collection-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 100px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            animation: cardAppear 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        @keyframes cardAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.5) rotateY(180deg);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) rotateY(0);
+            }
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .card.SSR {
+            border: 3px solid #f5576c;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffe5e9 100%);
+        }
+
+        .card.SR {
+            border: 3px solid #a18cd1;
+            background: linear-gradient(135deg, #f8f5ff 0%, #f0e5ff 100%);
+        }
+
+        .card.R {
+            border: 3px solid #84fab0;
+            background: linear-gradient(135deg, #f0fff8 0%, #e0fff0 100%);
+        }
+
+        .card.N {
+            border: 3px solid #b0b0b0;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+        }
+
+        .card-image {
+            font-size: 2.5em;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .card-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .card-name {
+            font-size: 1.1em;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+        }
+
+        .card-rarity {
+            font-size: 0.85em;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        .card.SSR .card-rarity {
+            background: #f5576c;
+            color: white;
+        }
+
+        .card.SR .card-rarity {
+            background: #a18cd1;
+            color: white;
+        }
+
+        .card.R .card-rarity {
+            background: #84fab0;
+            color: white;
+        }
+
+        .card.N .card-rarity {
+            background: #b0b0b0;
+            color: white;
+        }
+
+        .card-count {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+
+        .card-value {
+            font-weight: bold;
+            font-size: 0.85em;
+            padding: 4px 8px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            white-space: nowrap;
+        }
+
+        .recycle-btn {
+            padding: 6px 12px;
+            font-size: 0.8em;
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .recycle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(132, 250, 176, 0.4);
+        }
+
+        .recycle-btn:active {
+            transform: translateY(0);
+        }
+
+        .recycle-all-btn {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 1.1em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .recycle-all-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 重置按钮样式 - 右上角图标按钮 */
+        .reset-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            font-size: 1.2em;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(238, 90, 36, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .reset-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(238, 90, 36, 0.4);
+        }
+
+        .reset-btn:active {
+            transform: scale(0.95);
+        }
+
+        .reset-btn .btn-text {
+            display: none; /* 默认隐藏文字，只显示图标 */
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .recycle-info {
+            text-align: center;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #fff5f7 0%, #f8f9ff 100%);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .recycle-info-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .recycle-rates {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-size: 0.9em;
+        }
+
+        .recycle-rate-item {
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .recycle-rate-item.ssr {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .recycle-rate-item.sr {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+            color: white;
+        }
+
+        .recycle-rate-item.r {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: white;
+        }
+
+        .recycle-rate-item.n {
+            background: linear-gradient(135deg, #e0e0e0 0%, #b0b0b0 100%);
+            color: white;
+        }
+
+        /* 图鉴样式 */
+        .pokedex-section {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .pokedex-section h3 {
+            color: #764ba2;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .pokedex-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff5f7 100%);
+            border-radius: 12px;
+        }
+
+        .pokedex-stat {
+            text-align: center;
+        }
+
+        .pokedex-stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .pokedex-stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .pokedex-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .pokedex-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 3px solid #e0e0e0;
+            position: relative;
+        }
+
+        .pokedex-card.locked {
+            opacity: 0.5;
+            filter: grayscale(100%);
+            background: #f5f5f5;
+        }
+
+        .pokedex-card.unlocked {
+            border-color: #667eea;
+        }
+
+        .pokedex-card.unlocked:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .pokedex-card.unlocked.SSR {
+            border-color: #f5576c;
+            background: linear-gradient(135deg, #fff5f7 0%, #ffe5e9 100%);
+        }
+
+        .pokedex-card.unlocked.SR {
+            border-color: #a18cd1;
+            background: linear-gradient(135deg, #f8f5ff 0%, #f0e5ff 100%);
+        }
+
+        .pokedex-card.unlocked.R {
+            border-color: #84fab0;
+            background: linear-gradient(135deg, #f0fff8 0%, #e0fff0 100%);
+        }
+
+        .pokedex-card.unlocked.N {
+            border-color: #b0b0b0;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+        }
+
+        .pokedex-image {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .pokedex-card.locked .pokedex-image {
+            filter: brightness(0.5);
+        }
+
+        .pokedex-name {
+            font-weight: bold;
+            font-size: 0.95em;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .pokedex-card.locked .pokedex-name {
+            color: #999;
+        }
+
+        .pokedex-rarity {
+            font-size: 0.8em;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+
+        .pokedex-card.locked .pokedex-rarity {
+            background: #ccc;
+            color: white;
+        }
+
+        .pokedex-card.unlocked.SSR .pokedex-rarity {
+            background: #f5576c;
+            color: white;
+        }
+
+        .pokedex-card.unlocked.SR .pokedex-rarity {
+            background: #a18cd1;
+            color: white;
+        }
+
+        .pokedex-card.unlocked.R .pokedex-rarity {
+            background: #84fab0;
+            color: white;
+        }
+
+        .pokedex-card.unlocked.N .pokedex-rarity {
+            background: #b0b0b0;
+            color: white;
+        }
+
+        .pokedex-count {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 0.9em;
+        }
+
+        .pokedex-locked-text {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        @media (max-width: 768px) {
+            .pokedex-section {
+                padding: 20px 15px;
+            }
+
+            .pokedex-section h3 {
+                font-size: 1.4em;
+            }
+
+            .pokedex-stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .pokedex-stat-value {
+                font-size: 1.5em;
+            }
+
+            .pokedex-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 10px;
+            }
+
+            .pokedex-card {
+                padding: 10px;
+            }
+
+            .pokedex-image {
+                font-size: 2.5em;
+            }
+
+            .pokedex-name {
+                font-size: 0.85em;
+            }
+        }
+
+        .no-results, .no-collection {
+            text-align: center;
+            color: #999;
+            font-size: 1.2em;
+            padding: 40px;
+            grid-column: 1 / -1;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 20px;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px 30px;
+            border-radius: 20px 20px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-header h2 {
+            color: white;
+            font-size: 2em;
+        }
+
+        .close {
+            color: white;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            line-height: 1;
+        }
+
+        .close:hover {
+            transform: scale(1.2);
+        }
+
+        .modal-body {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .confirm-btn {
+            width: calc(100% - 60px);
+            margin: 0 30px 30px;
+            padding: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 让JavaScript完全控制网格布局 */
+        .stats-grid {
+            display: grid;
+            gap: 8px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            padding: 0 5px;
+        }
+
+        /* 大屏幕：增加gap */
+        @media (min-width: 600px) {
+            .stats-grid {
+                gap: 15px;
+                padding: 0;
+            }
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 10px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 8px 0;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            body {
+                padding: 8px;
+            }
+
+            .container {
+                padding: 0;
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .version {
+                font-size: 0.75em;
+                margin-top: 2px;
+            }
+            
+            header {
+                flex-direction: column;
+                gap: 12px;
+                padding: 15px 12px;
+                width: 100%;
+            }
+
+            .user-info {
+                font-size: 1.1em;
+            }
+
+            .header-actions {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 8px;
+                width: 100%;
+            }
+
+            .currency {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+
+            main {
+                gap: 20px;
+            }
+
+            .gacha-section, .results-section, .collection-section, .stats-section {
+                padding: 15px 10px;
+                border-radius: 12px;
+                width: 100%;
+                overflow: hidden;
+            }
+
+            .banner h2 {
+                font-size: 1.5em;
+                margin-bottom: 12px;
+            }
+
+            .rates {
+                gap: 5px;
+                padding: 0;
+                width: 100%;
+            }
+
+            .rate-item {
+                padding: 5px 4px;
+                font-size: 0.7em;
+                border-radius: 10px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            .draw-buttons {
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            .draw-btn {
+                width: 100%;
+                max-width: none;
+                padding: 14px 15px;
+                font-size: 1em;
+                flex-direction: row;
+                justify-content: center;
+            }
+
+            .btn-text {
+                font-size: 1em;
+            }
+
+            .btn-cost {
+                font-size: 0.85em;
+                margin-left: 8px;
+            }
+
+            .stats-grid {
+                gap: 8px;
+                padding: 0;
+                width: 100%;
+            }
+
+            .stat-card {
+                padding: 12px 8px;
+                min-width: 0;
+            }
+
+            .stat-value {
+                font-size: 1.6em;
+                margin: 6px 0;
+            }
+
+            .stat-label {
+                font-size: 0.75em;
+            }
+
+            .results-section h3, .collection-section h3, .stats-section h3 {
+                font-size: 1.4em;
+                margin-bottom: 15px;
+            }
+            
+            .cards-container, .collection-grid {
+                gap: 10px;
+            }
+
+            .card {
+                padding: 10px 12px;
+                gap: 10px;
+            }
+
+            .card-image {
+                font-size: 2em;
+            }
+
+            .card-info {
+                gap: 6px;
+            }
+
+            .card-name {
+                font-size: 1em;
+            }
+
+            .card-rarity {
+                font-size: 0.75em;
+                padding: 3px 6px;
+            }
+
+            .card-count {
+                font-size: 0.85em;
+            }
+
+            .card-value {
+                font-size: 0.75em;
+                padding: 3px 6px;
+            }
+
+            .recycle-btn {
+                font-size: 0.75em;
+                padding: 4px 8px;
+            }
+
+            .recycle-all-btn {
+                padding: 12px;
+                font-size: 1em;
+                margin-top: 15px;
+            }
+
+            .recycle-info {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+
+            .recycle-info-title {
+                font-size: 1em;
+                margin-bottom: 6px;
+            }
+
+            .recycle-rates {
+                gap: 10px;
+                font-size: 0.85em;
+            }
+
+            .recycle-rate-item {
+                padding: 4px 8px;
+                font-size: 0.85em;
+            }
+
+            .no-results, .no-collection {
+                font-size: 1em;
+                padding: 30px 15px;
+            }
+
+            /* 移动端模态框优化 */
+            .modal-content {
+                margin: 10px auto;
+                max-width: calc(100vw - 20px);
+                max-height: 90vh;
+                border-radius: 16px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .modal-header {
+                padding: 18px 20px;
+                flex-shrink: 0;
+            }
+
+            .modal-header h2 {
+                font-size: 1.5em;
+            }
+
+            .close {
+                font-size: 30px;
+            }
+
+            .modal-body {
+                padding: 12px 10px;
+                gap: 8px;
+                overflow-y: auto;
+                flex: 1;
+                min-height: 0;
+                grid-template-columns: 1fr;
+            }
+            
+            /* 模态框中的卡片更紧凑 */
+            .modal-body .card {
+                padding: 8px 10px;
+                gap: 8px;
+                flex-wrap: nowrap;
+                overflow: hidden;
+            }
+            
+            .modal-body .card-image {
+                font-size: 1.6em;
+                flex-shrink: 0;
+            }
+            
+            .modal-body .card-info {
+                flex: 1;
+                min-width: 0;
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            
+            .modal-body .card-name {
+                font-size: 0.85em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+            }
+            
+            .modal-body .card-rarity {
+                font-size: 0.65em;
+                padding: 2px 5px;
+                flex-shrink: 0;
+            }
+
+            .confirm-btn {
+                width: calc(100% - 20px);
+                margin: 10px 10px;
+                padding: 14px;
+                font-size: 1.1em;
+                flex-shrink: 0;
+            }
+        }
+
+        /* 超小屏幕优化 (小于375px) */
+        @media (max-width: 375px) {
+            body {
+                padding: 8px;
+            }
+
+            h1 {
+                font-size: 1.2em;
+            }
+
+            .version {
+                font-size: 0.7em;
+            }
+
+            header {
+                padding: 12px 15px;
+                gap: 10px;
+            }
+
+            .header-actions {
+                gap: 8px;
+            }
+
+            .currency {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+
+            .rates {
+                gap: 4px;
+            }
+
+            .rate-item {
+                padding: 4px 5px;
+                font-size: 0.65em;
+                border-radius: 10px;
+            }
+
+            .draw-buttons {
+                gap: 8px;
+                padding: 0 5px;
+            }
+
+            .draw-btn {
+                padding: 12px 10px;
+                font-size: 0.9em;
+            }
+
+            .btn-text {
+                font-size: 0.9em;
+            }
+
+            .btn-cost {
+                font-size: 0.8em;
+            }
+
+            .stats-grid {
+                gap: 6px;
+            }
+
+            .stat-card {
+                padding: 10px 6px;
+            }
+
+            .stat-value {
+                font-size: 1.3em;
+            }
+
+            .stat-label {
+                font-size: 0.65em;
+            }
+
+            .card {
+                padding: 8px 10px;
+                gap: 8px;
+            }
+
+            .card-image {
+                font-size: 1.8em;
+            }
+
+            .card-name {
+                font-size: 0.9em;
+            }
+
+            .card-info {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+
+            .pokedex-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .pokedex-card {
+                padding: 8px;
+            }
+
+            .pokedex-image {
+                font-size: 2em;
+            }
+
+            .pokedex-name {
+                font-size: 0.8em;
+            }
+
+            .pack-card {
+                padding: 15px;
+            }
+
+            .pack-icon {
+                font-size: 2.5em;
+            }
+
+            .pack-name {
+                font-size: 1.1em;
+            }
+
+            .pack-desc {
+                font-size: 0.85em;
+            }
+
+            .gacha-section, .results-section, .collection-section, .stats-section, .pokedex-section {
+                padding: 15px 12px;
+            }
+
+            .results-section h3, .collection-section h3, .stats-section h3, .pokedex-section h3 {
+                font-size: 1.2em;
+            }
+
+            .banner h2 {
+                font-size: 1.3em;
+            }
+
+            .rates {
+                gap: 6px;
+            }
+
+            .rate-item {
+                padding: 4px 8px;
+                font-size: 0.75em;
+            }
+
+            .recycle-all-btn {
+                padding: 10px;
+                font-size: 0.95em;
+            }
+
+            .back-btn {
+                padding: 10px;
+                font-size: 0.95em;
+            }
+
+            .modal-header {
+                padding: 15px;
+            }
+
+            .modal-header h2 {
+                font-size: 1.3em;
+            }
+
+            .modal-body {
+                padding: 10px 8px;
+                grid-template-columns: 1fr;
+            }
+
+            .confirm-btn {
+                padding: 12px;
+                font-size: 1em;
+            }
+        }
+
+        /* 平板优化 (768px - 1024px) */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                max-width: 900px;
+            }
+        }
+
+        /* 横屏优化 - 小屏幕 */
+        @media (max-width: 768px) and (orientation: landscape) {
+            body {
+                padding: 8px;
+            }
+
+            header {
+                flex-direction: row;
+                padding: 12px 20px;
+            }
+
+            .header-actions {
+                flex-direction: row;
+                width: auto;
+            }
+
+            .modal-content {
+                max-height: 90vh;
+                margin: 5vh auto;
+            }
+
+            .pokedex-stats {
+                flex-direction: row;
+            }
+        }
+
+        /* 触摸设备优化 */
+        @media (hover: none) and (pointer: coarse) {
+            .draw-btn, .confirm-btn, .back-btn, .recycle-all-btn {
+                min-height: 48px;
+            }
+
+            .close {
+                padding: 8px;
+                min-width: 44px;
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .card:active {
+                transform: scale(0.98);
+            }
+
+            .pack-card:active {
+                transform: scale(0.98);
+            }
+
+            .recycle-btn {
+                min-height: 36px;
+                padding: 8px 14px;
+            }
+
+            /* 禁用悬停效果，改用点击效果 */
+            .draw-btn:hover,
+            .pack-card:hover,
+            .card:hover,
+            .pokedex-card:hover {
+                transform: none;
+            }
+        }
+
+        /* iOS 安全区域适配 (刘海屏) */
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: max(20px, env(safe-area-inset-left));
+                padding-right: max(20px, env(safe-area-inset-right));
+                padding-bottom: max(20px, env(safe-area-inset-bottom));
+            }
+
+            @media (max-width: 768px) {
+                body {
+                    padding-left: max(10px, env(safe-area-inset-left));
+                    padding-right: max(10px, env(safe-area-inset-right));
+                    padding-bottom: max(10px, env(safe-area-inset-bottom));
+                }
+            }
+        }
+
+        /* 移动端滚动优化 */
+        @media (max-width: 768px) {
+            .cards-container,
+            .collection-grid,
+            .pokedex-grid,
+            .modal-body {
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* 防止内容溢出 */
+            .container,
+            .gacha-section,
+            .stats-section,
+            .results-section,
+            .collection-section,
+            .pokedex-section,
+            header {
+                overflow-x: hidden;
+                max-width: 100%;
+            }
+
+            /* 全局盒模型确保 */
+            * {
+                max-width: 100%;
+            }
+
+            /* 优化文字换行 */
+            .card-name,
+            .pack-desc,
+            .pokedex-name,
+            .stat-label {
+                word-break: break-word;
+                overflow-wrap: break-word;
+            }
+
+            /* 确保弹性盒子不溢出 */
+            .card,
+            .card-info {
+                min-width: 0;
+            }
+        }
+
+        /* 卡包选择样式 */
+        .pack-selector {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .pack-selector h2 {
+            color: #764ba2;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .pack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .pack-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border: 3px solid #e0e0e0;
+        }
+
+        .pack-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border-color: #667eea;
+        }
+
+        .pack-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+
+        .pack-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .pack-desc {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        .back-btn {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 移动端卡包选择优化 */
+        @media (max-width: 768px) {
+            .pack-selector {
+                padding: 20px 15px;
+            }
+
+            .pack-selector h2 {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+
+            .pack-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .pack-card {
+                padding: 20px;
+            }
+
+            .pack-icon {
+                font-size: 3em;
+                margin-bottom: 10px;
+            }
+
+            .pack-name {
+                font-size: 1.3em;
+                margin-bottom: 8px;
+            }
+
+            .pack-desc {
+                font-size: 0.9em;
+            }
+
+            .back-btn {
+                padding: 12px;
+                font-size: 1em;
+            }
+        }
+
+        /* 更新日志模态框样式 */
+        .changelog-modal .modal-content {
+            max-width: 900px;
+        }
+
+        .changelog-content {
+            padding: 30px;
+        }
+
+        .changelog-version {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #fff5f7 100%);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .changelog-version h3 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .changelog-date {
+            color: #999;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+
+        .changelog-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .changelog-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .changelog-list li:before {
+            content: "✨";
+            position: absolute;
+            left: 0;
+            top: 8px;
+        }
+
+        .changelog-list li.fix:before {
+            content: "🐛";
+        }
+
+        .changelog-list li.optimize:before {
+            content: "⚡";
+        }
+
+        .changelog-list li.new:before {
+            content: "🎉";
+        }
+
+        @media (max-width: 768px) {
+            .changelog-content {
+                padding: 20px 15px;
+            }
+
+            .changelog-version {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .changelog-version h3 {
+                font-size: 1.3em;
+            }
+
+            .changelog-list li {
+                font-size: 0.95em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <button class="reset-btn" onclick="resetGame()" title="重置游戏">🔄</button>
+            <div>
+                <h1>✨ 幻想抽卡 ✨</h1>
+<div class="version" onclick="showChangelog()">v1.9.7</div>
+            </div>
+            <div class="header-actions">
+                <div class="user-info">
+                    <span class="currency">💎 抽卡券: <span id="tickets">100</span></span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- 卡包选择页面 -->
+            <div id="packSelectPage" class="pack-selector">
+                <h2>📦 选择卡包</h2>
+                <div class="pack-grid">
+                    <div class="pack-card" onclick="selectPack('car')">
+                        <div class="pack-icon">🏎️</div>
+                        <div class="pack-name">极速车神</div>
+                        <div class="pack-desc">收集全球300款超级跑车，打造你的梦幻车库！</div>
+                    </div>
+                    <div class="pack-card" onclick="selectPack('animal')">
+                        <div class="pack-icon">🐾</div>
+                        <div class="pack-name">动物王国</div>
+                        <div class="pack-desc">收集神话动物，从神龙到小猫，建立你的动物帝国！</div>
+                    </div>
+                    <div class="pack-card" onclick="selectPack('star')">
+                        <div class="pack-icon">🌟</div>
+                        <div class="pack-name">星辰幻想</div>
+                        <div class="pack-desc">探索十二星座的奥秘，获得璀璨星辰的祝福！</div>
+                    </div>
+                    <div class="pack-card" onclick="selectPack('hero')">
+                        <div class="pack-icon">⚔️</div>
+                        <div class="pack-name">英雄传说</div>
+                        <div class="pack-desc">召唤传奇英雄，组建最强冒险队伍！</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 抽卡和图鉴页面 -->
+            <div id="gachaPage" class="hidden">
+                <button class="back-btn" onclick="backToPackSelect()">
+                    <span>⬅️</span>
+                    <span>返回卡包选择</span>
+                </button>
+
+                <div class="gacha-section">
+                <div class="banner">
+                    <h2 id="poolName">限定卡池</h2>
+                    <div class="rates" id="mainRates">
+                        <span class="rate-item ssr">SSR: 1.8%</span>
+                        <span class="rate-item sr">SR: 20.4%</span>
+                        <span class="rate-item r">R: 65%</span>
+                        <span class="rate-item n">N: 35%</span>
+                    </div>
+                </div>
+
+                <div class="draw-buttons" id="mainDrawButtons">
+                    <button class="draw-btn single" onclick="draw(1)">
+                        <span class="btn-text">单抽</span>
+                        <span class="btn-cost">💎 1</span>
+                    </button>
+                    <button class="draw-btn multi" onclick="draw(10)">
+                        <span class="btn-text">十连抽</span>
+                        <span class="btn-cost">💎 10</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <h3>抽卡统计</h3>
+                <div class="stats-grid" id="mainStatsGrid">
+                    <div class="stat-card">
+                        <div class="stat-label">总抽卡次数</div>
+                        <div class="stat-value" id="totalDraws">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">SSR 获得数</div>
+                        <div class="stat-value" id="ssrCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">SR 获得数</div>
+                        <div class="stat-value" id="srCount">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">收藏总数</div>
+                        <div class="stat-value" id="collectionCount">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pokedex-section">
+                <h3>📖 卡片图鉴</h3>
+                <div class="pokedex-stats">
+                    <div class="pokedex-stat">
+                        <div class="pokedex-stat-value" id="pokedexCollected">0</div>
+                        <div class="pokedex-stat-label">已收集</div>
+                    </div>
+                    <div class="pokedex-stat">
+                        <div class="pokedex-stat-value" id="pokedexTotal">0</div>
+                        <div class="pokedex-stat-label">总卡片数</div>
+                    </div>
+                    <div class="pokedex-stat">
+                        <div class="pokedex-stat-value" id="pokedexProgress">0%</div>
+                        <div class="pokedex-stat-label">完成度</div>
+                    </div>
+                </div>
+                <div class="pokedex-grid" id="pokedexGrid"></div>
+            </div>
+
+            <div class="results-section" id="results">
+                <h3>最近抽卡</h3>
+                <div class="cards-container" id="cardsContainer">
+                    <p class="no-results">点击按钮开始抽卡！</p>
+                </div>
+            </div>
+
+            <div class="collection-section">
+                <h3>我的收藏</h3>
+                <div class="recycle-info">
+                    <div class="recycle-info-title">💎 自动回收价值</div>
+                    <div class="recycle-rates">
+                        <span class="recycle-rate-item ssr">SSR = 10券</span>
+                        <span class="recycle-rate-item sr">SR = 3券</span>
+                        <span class="recycle-rate-item r">R = 1券</span>
+                        <span class="recycle-rate-item n">N = 1券</span>
+                    </div>
+                    <div style="text-align: center; color: #666; font-size: 0.9em; margin-top: 8px;">
+                        抽到卡片时自动回收为抽卡券，保持游戏持续进行
+                    </div>
+                </div>
+                <div class="collection-grid" id="collection">
+                    <p class="no-collection">暂无收藏</p>
+                </div>
+                <button class="recycle-all-btn" onclick="recycleAll()" style="display: none;" id="recycleAllBtn">
+                    💰 一键回收所有卡片
+                </button>
+            </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="resultModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>恭喜获得</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <button class="confirm-btn" onclick="closeModal()">确认</button>
+        </div>
+    </div>
+
+    <div class="modal changelog-modal" id="changelogModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📋 更新日志</h2>
+                <span class="close" onclick="closeChangelogModal()">&times;</span>
+            </div>
+            <div class="changelog-content">
+                <div class="changelog-version">
+                    <h3>
+<span>v1.9.7</span>
+                        <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 3px 10px; border-radius: 15px; font-size: 0.7em;">最新</span>
+                    </h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="fix">🐛 彻底解决极速车神卡包抽卡后UI超框问题</li>
+                        <li class="fix">使用requestAnimationFrame确保DOM完全渲染后再应用响应式布局</li>
+                        <li class="fix">修复大DOM元素量(300张卡片)导致的布局计算延迟问题</li>
+                        <li class="optimize">优化selectPack和draw函数中的布局更新时机</li>
+                        <li class="optimize">确保所有卡包的UI表现一致，无超框现象</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.9.6</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="fix">🔧 回退v1.9.5的间距修改，恢复UI布局稳定性</li>
+                        <li class="fix">移除section的margin-bottom，避免右侧UI与边框重合</li>
+                        <li class="fix">移除pokedex-section的margin-bottom</li>
+                        <li class="fix">回退back-btn的margin-bottom到20px</li>
+                        <li class="optimize">保持v1.9.4的稳定布局</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.9.5</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="optimize">🎨 优化页面布局间距，提升视觉舒适度</li>
+                        <li class="optimize">增加各个区块之间的垂直间距，让内容更清晰</li>
+                        <li class="optimize">返回按钮与抽卡区域之间间距增加到30px</li>
+                        <li class="optimize">各个section底部增加20px间距</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.9.4</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="fix">🔧 彻底解决抽卡后UI布局变化的问题</li>
+                        <li class="fix">移除CSS中所有网格列数固定限制，避免与JavaScript冲突</li>
+                        <li class="fix">统一由JavaScript完全控制响应式布局，确保抽卡前后完全一致</li>
+                        <li class="optimize">简化CSS媒体查询，只保留间距和padding调整</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.9.3</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="fix">🔧 修复抽卡后统计卡片和图鉴卡片超框溢出的问题</li>
+                        <li class="fix">抽卡后自动重新应用响应式布局样式</li>
+                        <li class="fix">选择卡包后自动重新应用响应式布局样式</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.9.2</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="fix">🔧 修复抽卡后按钮右侧贴边无安全边距的问题</li>
+                        <li class="fix">JavaScript内联样式添加padding和box-sizing</li>
+                        <li class="optimize">确保移动端元素正确计算宽度，不会溢出</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.9.0</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="optimize">🧹 大幅清理冗余CSS代码</li>
+                        <li class="optimize">删除21个冗余媒体查询，保留14个必要的</li>
+                        <li class="optimize">删除9个重复.rates定义，保留5个必要的</li>
+                        <li class="optimize">文件大小从135KB减少到122KB</li>
+                        <li class="optimize">代码行数从3400+减少到2900+</li>
+                        <li class="fix">依靠JavaScript处理移动端响应式布局</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.8.2</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="fix">使用JavaScript动态设置内联样式</li>
+                        <li class="fix">内联样式优先级最高，彻底解决CSS冲突</li>
+                        <li class="optimize">移动端强制2列网格布局</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.8.1</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="fix">使用ID选择器彻底解决CSS优先级问题</li>
+                        <li class="optimize">针对移动端强制2列布局</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.8.0</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="optimize">📱 采用移动优先(Mobile First)策略重构样式</li>
+                        <li class="fix">彻底解决 iPhone 13 概率标签被截断的问题(默认2列)</li>
+                        <li class="fix">彻底解决统计卡片被截断的问题(默认2列)</li>
+                        <li class="fix">彻底解决抽卡按钮被截断的问题(默认垂直)</li>
+                        <li class="optimize">大屏幕(>600px)自动切换为桥式布局</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.7.2</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="fix">🔧 使用 !important 强制修复移动端布局问题</li>
+                        <li class="fix">彻底解决概率标签被截断的问题(强制2列网格)</li>
+                        <li class="fix">彻底解决统计卡片被截断的问题(强制2列网格)</li>
+                        <li class="fix">彻底解决抽卡按钮被截断的问题(强制垂直堆叠)</li>
+                        <li class="optimize">将所有移动端修复样式合并到文件末尾确保最高优先级</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.7.1</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="fix">🔧 彻底修复iPhone 13等设备上元素被截断的问题</li>
+                        <li class="fix">修复概率标签右侧(SR/N)被截断的问题</li>
+                        <li class="fix">修复统计卡片右侧被截断的问题</li>
+                        <li class="optimize">减小页面边距，给内容更多显示空间</li>
+                        <li class="optimize">所有容器添加overflow:hidden防止溢出</li>
+                        <li class="optimize">优化移动端的padding和gap间距</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.7.0</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="new">🔧 彻底重构移动端布局系统</li>
+                        <li class="new">概率标签改为2x2网格布局，彻底解决截断问题</li>
+                        <li class="new">抽卡按钮改为垂直堆叠布局(移动端)，按钮更大更易点击</li>
+                        <li class="new">专门适配iPhone 13等设备(390px宽度)</li>
+                        <li class="optimize">统计卡片使用更紧凑的网格系统</li>
+                        <li class="optimize">优化所有触摸元素的点击区域</li>
+                        <li class="fix">彻底解决各种移动设备上的元素被截断问题</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.6.3</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="fix">修复竖屏高分辨率手机(如2670x1200)概率标签被截断问题</li>
+                        <li class="fix">修复竖屏高分辨率手机十连抽按钮显示不完整问题</li>
+                        <li class="fix">修复竖屏高分辨率手机统计卡片标签被截断问题</li>
+                        <li class="new">新增中等移动设备(376px-500px)专用适配</li>
+                        <li class="optimize">优化按钮和标签在窄屏设备上的尺寸</li>
+                        <li class="optimize">优化统计网格的内边距和间距</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.6.2</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="new">新增高分辨率移动设备适配(2670x1200等)</li>
+                        <li class="new">新增触摸设备专属媒体查询(769px-1024px)</li>
+                        <li class="new">新增高分辨率横屏设备适配(>1024px且高度<700px)</li>
+                        <li class="new">新增超高分辨率移动设备适配(>1200px触摸设备)</li>
+                        <li class="optimize">优化中等尺寸触摸设备的布局</li>
+                        <li class="optimize">优化统计网格在大屏设备上显示为4-5列</li>
+                        <li class="optimize">优化卡包选择和弹窗在高分辨率设备上的显示</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.6.1</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="fix">修复重置按钮在移动端占用空间过大的问题</li>
+                        <li class="fix">统一重置按钮与抽卡券按钮的大小</li>
+                        <li class="fix">修复抽卡页面概率标签被截断的问题</li>
+                        <li class="fix">修复十连抽按钮在小屏幕上被截断的问题</li>
+                        <li class="fix">修复统计卡片在移动端显示不完整的问题</li>
+                        <li class="optimize">优化超小屏幕(375px以下)的显示效果</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.6.0</h3>
+                    <div class="changelog-date">2025-12-30</div>
+                    <ul class="changelog-list">
+                        <li class="new">新增游戏重置功能，一键清除所有数据重新开始</li>
+                        <li class="new">重置按钮位于页面右上角，带确认对话框防止误操作</li>
+                        <li class="optimize">全面优化移动端适配，修复多处显示溢出问题</li>
+                        <li class="fix">修复概率标签在小屏幕上被截断的问题</li>
+                        <li class="fix">修复统计卡片文字显示不全的问题</li>
+                        <li class="fix">修复抽卡按钮在移动端被截断的问题</li>
+                        <li class="fix">修复抽卡结果弹窗卡片显示不完整的问题</li>
+                        <li class="optimize">优化触摸设备交互体验</li>
+                        <li class="optimize">增加iOS刘海屏安全区域适配</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.5.0</h3>
+                    <div class="changelog-date">2025-12-29</div>
+                    <ul class="changelog-list">
+                        <li class="new">车型数量扩充至300款，打造最全车库</li>
+                        <li class="new">SSR级30款顶级超跑（布加迪、科尼塞克等）</li>
+                        <li class="new">SR级70款高性能跑车（法拉利、兰博基尼等）</li>
+                        <li class="new">R级100款豪华性能车（宝马M、奔驰AMG等）</li>
+                        <li class="new">N级100款大众车型（丰田、本田、新能源车等）</li>
+                        <li class="optimize">优化图鉴显示，未解锁车辆显示车型图标但置灰</li>
+                        <li class="optimize">改进回收价值为整数（SSR=10, SR=3, R=1, N=1）</li>
+                        <li class="optimize">使用更丰富的车辆图标区分车型级别</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.4.0</h3>
+                    <div class="changelog-date">2025-12-29</div>
+                    <ul class="changelog-list">
+                        <li class="new">新增卡片图鉴系统，展示所有卡片收集进度</li>
+                        <li class="new">已收集的卡片高亮显示，显示拥有数量</li>
+                        <li class="new">未收集的卡片显示为灰色锁定状态</li>
+                        <li class="new">实时显示图鉴完成度百分比</li>
+                        <li class="new">抽卡后自动回收为抽卡券，无需手动操作</li>
+                        <li class="new">抽卡结果弹窗显示回收获得的抽卡券数量</li>
+                        <li class="optimize">优化游戏流程，卡片自动加入收藏和图鉴</li>
+                        <li class="optimize">改进经济系统，让游戏更加流畅持久</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.3.0</h3>
+                    <div class="changelog-date">2025-12-29</div>
+                    <ul class="changelog-list">
+                        <li class="new">新增卡片回收系统，让游戏体验更持久</li>
+                        <li class="new">SSR卡片可回收10抽卡券，SR为3券，R为1券，N为1券</li>
+                        <li class="new">收藏界面显示每张卡片的回收价值</li>
+                        <li class="new">支持单张卡片回收和一键回收所有卡片</li>
+                        <li class="new">添加回收确认提示，防止误操作</li>
+                        <li class="new">回收成功后显示优雅的通知动画</li>
+                        <li class="optimize">优化抽卡券经济系统，玩家可以持续游玩</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.2.0</h3>
+                    <div class="changelog-date">2025-12-29</div>
+                    <ul class="changelog-list">
+                        <li class="new">新增极速车神卡包，包含100款热门车型</li>
+                        <li class="new">收录15款顶级超跑（SSR）：布加迪、科尼塞克、帕加尼等</li>
+                        <li class="new">收录25款高性能跑车（SR）：法拉利、兰博基尼、保时捷等</li>
+                        <li class="new">收录30款豪华性能车（R）：宝马M系列、奔驰AMG等</li>
+                        <li class="new">收录30款大众车型（N）：丰田、本田、特斯拉等</li>
+                        <li class="optimize">极速车神卡包置于首位，成为默认卡包</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.1.0</h3>
+                    <div class="changelog-date">2025-12-29</div>
+                    <ul class="changelog-list">
+                        <li class="new">新增版本号显示，点击可查看更新日志</li>
+                        <li class="new">新增更新公告页面，记录每个版本的更新内容</li>
+                        <li class="optimize">优化版本信息的展示方式</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v1.0.0</h3>
+                    <div class="changelog-date">2025-12-28</div>
+                    <ul class="changelog-list">
+                        <li class="new">新增三个卡包系统：动物王国、星辰幻想、英雄传说</li>
+                        <li class="new">支持卡包切换功能</li>
+                        <li class="optimize">优化移动端界面，支持两列网格布局</li>
+                        <li class="optimize">优化十连抽结果展示，一屏内显示所有结果</li>
+                        <li class="fix">修复卡片内容对齐问题</li>
+                    </ul>
+                </div>
+
+                <div class="changelog-version">
+                    <h3>v0.9.0</h3>
+                    <div class="changelog-date">2025-12-27</div>
+                    <ul class="changelog-list">
+                        <li class="new">首次发布抽卡游戏</li>
+                        <li class="new">支持单抽和十连抽功能</li>
+                        <li class="new">添加收藏系统</li>
+                        <li class="new">添加抽卡统计功能</li>
+                        <li class="new">支持本地数据持久化</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+const VERSION = 'v1.9.7'; // 当前版本号
+
+        // ========================================
+        // 响应式布局函数 - 使用内联样式确保最高优先级
+        // ========================================
+        function applyResponsiveLayout() {
+            const width = window.innerWidth;
+            const rates = document.getElementById('mainRates');
+            const drawButtons = document.getElementById('mainDrawButtons');
+            const statsGrid = document.getElementById('mainStatsGrid');
+
+            if (width <= 500) {
+                // 移动端：2列布局
+                if (rates) {
+                    rates.style.cssText = 'display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; box-sizing: border-box !important;';
+                }
+                if (drawButtons) {
+                    drawButtons.style.cssText = 'display: flex !important; flex-direction: column !important; gap: 10px !important; width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; padding: 0 5px !important;';
+                }
+                if (statsGrid) {
+                    statsGrid.style.cssText = 'display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; width: 100% !important; max-width: 100% !important; overflow: hidden !important; box-sizing: border-box !important;';
+                }
+                // 同时设置子元素
+                document.querySelectorAll('#mainRates .rate-item').forEach(item => {
+                    item.style.cssText = 'width: 100% !important; max-width: 100% !important; overflow: hidden !important; text-overflow: ellipsis !important; font-size: 0.75em !important; padding: 6px 8px !important; white-space: nowrap !important;';
+                });
+                document.querySelectorAll('#mainDrawButtons .draw-btn').forEach(btn => {
+                    btn.style.cssText = 'width: 100% !important; max-width: 100% !important; flex-direction: row !important; justify-content: center !important; padding: 14px 10px !important; box-sizing: border-box !important;';
+                });
+                document.querySelectorAll('#mainStatsGrid .stat-card').forEach(card => {
+                    card.style.cssText = 'min-width: 0 !important; overflow: hidden !important;';
+                });
+                document.querySelectorAll('#mainStatsGrid .stat-label').forEach(label => {
+                    label.style.cssText = 'font-size: 0.7em !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;';
+                });
+            } else {
+                // 大屏幕：恢复原始布局（清除内联样式，让CSS生效）
+                if (rates) rates.style.cssText = '';
+                if (drawButtons) drawButtons.style.cssText = '';
+                if (statsGrid) statsGrid.style.cssText = '';
+                document.querySelectorAll('#mainRates .rate-item').forEach(item => item.style.cssText = '');
+                document.querySelectorAll('#mainDrawButtons .draw-btn').forEach(btn => btn.style.cssText = '');
+                document.querySelectorAll('#mainStatsGrid .stat-card').forEach(card => card.style.cssText = '');
+                document.querySelectorAll('#mainStatsGrid .stat-label').forEach(label => label.style.cssText = '');
+                document.querySelectorAll('#pokedexGrid .pokedex-card').forEach(card => card.style.cssText = '');
+            }
+        }
+
+        // 页面加载和窗口大小变化时应用布局
+        window.addEventListener('load', applyResponsiveLayout);
+        window.addEventListener('resize', applyResponsiveLayout);
+        // 立即执行一次
+        document.addEventListener('DOMContentLoaded', applyResponsiveLayout);
+
+        // 所有卡包数据
+        const cardPacks = {
+            car: {
+                name: '🏎️ 极速车神',
+                SSR: [
+                    // 顶级超跑 (30款)
+                    { id: 'c1', name: '布加迪Chiron Super Sport', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c2', name: '科尼塞克Jesko Absolut', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c3', name: '帕加尼Huayra R', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c4', name: '迈凯伦P1 GTR', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c5', name: '法拉利LaFerrari Aperta', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c6', name: '兰博基尼Veneno Roadster', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c7', name: '阿斯顿·马丁Valkyrie AMR Pro', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c8', name: '迈巴赫Exelero', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c9', name: '劳斯莱斯幻影VIII', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c10', name: '宾利慕尚长轴距版', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c11', name: '保时捷918 Spyder', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c12', name: '迈凯伦Speedtail', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c13', name: '兰博基尼Sian FKP 37', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c14', name: '法拉利SF90 Stradale', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c15', name: '帕加尼Zonda HP Barchetta', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c16', name: 'SSC Tuatara', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c17', name: '轩尼诗Venom F5', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c18', name: '布加迪Divo', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c19', name: '阿斯顿·马丁One-77', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c20', name: 'W Motors Lykan Hypersport', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c21', name: '劳斯莱斯库里南', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c22', name: '宾利添越Speed', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c23', name: '法拉利Monza SP2', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c24', name: '兰博基尼Countach LPI 800-4', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c25', name: '迈凯伦Elva', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c26', name: '保时捷911 GT2 RS', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c27', name: '帕加尼Imola', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c28', name: '科尼塞克Regera', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c29', name: '阿斯顿·马丁Victor', rarity: 'SSR', rate: 0.0006, image: '🏎️' },
+                    { id: 'c30', name: 'Gordon Murray T.50', rarity: 'SSR', rate: 0.0006, image: '🏎️' }
+                ],
+                SR: [
+                    // 高性能跑车 (70款)
+                    { id: 'c31', name: '法拉利488 Pista', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c32', name: '兰博基尼Huracan EVO', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c33', name: '保时捷911 Turbo S', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c34', name: '迈凯伦720S Spider', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c35', name: '阿斯顿·马丁DB11 AMR', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c36', name: '奥迪R8 V10 Plus', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c37', name: '奔驰AMG GT R Pro', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c38', name: '宝马M8雷霆版', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c39', name: '日产GT-R Nismo', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c40', name: '雪佛兰科尔维特C8 Z06', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c41', name: '道奇蝰蛇ACR', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c42', name: '本田NSX Type S', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c43', name: '雷克萨斯LFA Nurburgring', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c44', name: '捷豹F-Type SVR', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c45', name: '玛莎拉蒂MC20', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c46', name: '阿尔法·罗密欧8C Competizione', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c47', name: '路特斯Evija', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c48', name: '迈凯伦765LT', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c49', name: '保时捷Taycan Turbo S', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c50', name: '特斯拉Roadster 2.0', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c51', name: '福特GT Heritage Edition', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c52', name: '兰博基尼Urus Performante', rarity: 'SR', rate: 0.00291, image: '🚙' },
+                    { id: 'c53', name: '法拉利Roma', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c54', name: '宾利欧陆GT Speed', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c55', name: '奔驰SLS AMG Black Series', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c56', name: '阿斯顿·马丁DBS Superleggera', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c57', name: '保时捷Cayman GT4 RS', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c58', name: '法拉利812 Superfast', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c59', name: '兰博基尼Aventador SVJ', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c60', name: '迈凯伦Artura', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c61', name: '奥迪RS e-tron GT', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c62', name: '宝马i8 Roadster', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c63', name: '奔驰AMG GT Black Series', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c64', name: '路特斯Emira V6', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c65', name: '捷豹F-Pace SVR', rarity: 'SR', rate: 0.00291, image: '🚙' },
+                    { id: 'c66', name: '玛莎拉蒂Levante Trofeo', rarity: 'SR', rate: 0.00291, image: '🚙' },
+                    { id: 'c67', name: '阿尔法·罗密欧Giulia GTA', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c68', name: '雪佛兰Camaro ZL1', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c69', name: '福特野马Shelby GT500', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c70', name: '道奇挑战者SRT Hellcat', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c71', name: '丰田GR Supra', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c72', name: '日产Z Proto', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c73', name: '马自达RX-Vision', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c74', name: '斯巴鲁WRX STI S209', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c75', name: '三菱Lancer EVO Final Edition', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c76', name: '现代i30 N Performance', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c77', name: '起亚Stinger GT', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c78', name: '特斯拉Model S Plaid', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c79', name: 'Lucid Air Dream Edition', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c80', name: '蔚来ET7 Performance', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c81', name: '小鹏P7 鹏翼版', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c82', name: '比亚迪汉EV千山翠', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c83', name: '宝马M4 CSL', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c84', name: '奔驰AMG C63 S Coupe', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c85', name: '奥迪RS7 Sportback', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c86', name: '保时捷Panamera Turbo S', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c87', name: '捷豹XE SV Project 8', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c88', name: '沃尔沃Polestar 1', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c89', name: '凯迪拉克CT5-V Blackwing', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c90', name: '林肯飞行家Black Label', rarity: 'SR', rate: 0.00291, image: '🚙' },
+                    { id: 'c91', name: '路虎揽胜运动版SVR', rarity: 'SR', rate: 0.00291, image: '🚙' },
+                    { id: 'c92', name: '雷克萨斯LC 500h', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c93', name: '英菲尼迪Q60红运版', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c94', name: '讴歌NSX Type S', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c95', name: '创世纪G70 3.3T', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c96', name: '极星2长续航版', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c97', name: '阿维塔11', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c98', name: '智己L7', rarity: 'SR', rate: 0.00291, image: '🚗' },
+                    { id: 'c99', name: '高合HiPhi X', rarity: 'SR', rate: 0.00291, image: '🚙' },
+                    { id: 'c100', name: '岚图FREE', rarity: 'SR', rate: 0.00291, image: '🚙' }
+                ],
+                R: [
+                    // 豪华性能车 (100款)
+                    { id: 'c101', name: '宝马M3 Competition', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c102', name: '奔驰C63 S AMG', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c103', name: '奥迪RS5 Sportback', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c104', name: '保时捷Cayenne Turbo', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c105', name: '路虎揽胜星脉', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c106', name: '雷克萨斯LC 500', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c107', name: '英菲尼迪Q60', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c108', name: '凯迪拉克CT5-V', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c109', name: '宝马X6 M Competition', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c110', name: '奔驰G63 AMG', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c111', name: '玛莎拉蒂Ghibli Trofeo', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c112', name: '捷豹XE P300', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c113', name: '阿尔法·罗密欧Giulia Quadrifoglio', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c114', name: '雪佛兰Camaro SS', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c115', name: '福特野马GT', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c116', name: '道奇挑战者R/T', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c117', name: '斯巴鲁WRX STI', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c118', name: '三菱Lancer EVO X', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c119', name: '丰田Supra 3.0T', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c120', name: '马自达RX-7 FD', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c121', name: '日产370Z Nismo', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c122', name: '特斯拉Model S Long Range', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c123', name: '保时捷Panamera 4S', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c124', name: '奔驰E53 AMG', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c125', name: '宝马540i M运动套装', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c126', name: '奥迪S6', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c127', name: '沃尔沃S60 T8 Polestar', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c128', name: '凯迪拉克Escalade Sport', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c129', name: '林肯领航员Reserve', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c130', name: '路虎卫士110', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c131', name: '宝马M2 Competition', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c132', name: '奔驰A45 S AMG', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c133', name: '奥迪RS3', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c134', name: '保时捷Macan Turbo', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c135', name: '雷克萨斯RC F', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c136', name: '英菲尼迪QX50', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c137', name: '沃尔沃XC90 T8', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c138', name: '捷豹I-PACE', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c139', name: '路特斯Exige Sport 410', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c140', name: '阿尔法·罗密欧Stelvio Quadrifoglio', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c141', name: '本田思域Type R', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c142', name: '丰田凯美瑞TRD', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c143', name: '马自达3 2.5T', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c144', name: '大众高尔夫R', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c145', name: '福特福克斯ST', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c146', name: '雪佛兰科迈罗RS', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c147', name: '现代Veloster N', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c148', name: '起亚K5 GT', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c149', name: '日产Ariya', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c150', name: '本田e', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c151', name: '丰田bZ4X', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c152', name: '马自达MX-30', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c153', name: '斯巴鲁Solterra', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c154', name: '三菱欧蓝德PHEV', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c155', name: '特斯拉Model X', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c156', name: '蔚来ES8', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c157', name: '小鹏G9', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c158', name: '理想L9', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c159', name: '比亚迪唐EV', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c160', name: '吉利星越L雷神Hi·P', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c161', name: '长城坦克500', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c162', name: '哈弗H9', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c163', name: '领克09 EM-P', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c164', name: '红旗E-HS9', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c165', name: '宝马iX xDrive50', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c166', name: '奔驰EQS 450+', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c167', name: '奥迪e-tron GT', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c168', name: '保时捷Taycan 4S', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c169', name: '捷豹F-Pace', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c170', name: '路虎揽胜极光', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c171', name: '沃尔沃XC60 T8', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c172', name: '雷克萨斯NX 450h+', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c173', name: '英菲尼迪QX60', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c174', name: '讴歌MDX Type S', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c175', name: '凯迪拉克XT6', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c176', name: '林肯冒险家', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c177', name: '创世纪GV80', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c178', name: '玛莎拉蒂Grecale', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c179', name: '阿尔法·罗密欧Tonale', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c180', name: '极氪001', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c181', name: '集度ROBO-01', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c182', name: '飞凡R7', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c183', name: '赛力斯SF5', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c184', name: '腾势D9', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c185', name: '魏牌拿铁DHT-PHEV', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c186', name: '坦克300', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c187', name: '欧拉闪电猫', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c188', name: '捷途旅行者', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c189', name: '奇瑞瑞虎9', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c190', name: '星途揽月', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c191', name: '长安UNI-K', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c192', name: '传祺GS8', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c193', name: '荣威RX9', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c194', name: '名爵MG7', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c195', name: '五菱星光', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c196', name: '东风eπ007', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c197', name: '深蓝SL03', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c198', name: '长安启源A07', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c199', name: '零跑C11', rarity: 'R', rate: 0.0065, image: '🚙' },
+                    { id: 'c200', name: '哪吒S', rarity: 'R', rate: 0.0065, image: '🚙' }
+                ],
+                N: [
+                    // 大众车型 (100款)
+                    { id: 'c201', name: '本田思域', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c202', name: '丰田卡罗拉', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c203', name: '马自达3', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c204', name: '大众高尔夫', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c205', name: '福特福克斯', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c206', name: '雪佛兰科鲁兹', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c207', name: '现代伊兰特', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c208', name: '起亚K3', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c209', name: '日产轩逸', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c210', name: '本田雅阁', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c211', name: '丰田凯美瑞', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c212', name: '大众帕萨特', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c213', name: '奥迪A4L', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c214', name: '奔驰C级', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c215', name: '宝马3系', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c216', name: '特斯拉Model 3', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c217', name: '比亚迪汉', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c218', name: '蔚来ET5', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c219', name: '小鹏P7', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c220', name: '理想L7', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c221', name: '吉利星瑞', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c222', name: '长城坦克300', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c223', name: '哈弗H6', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c224', name: '领克03', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c225', name: '红旗H5', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c226', name: '马自达CX-5', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c227', name: '本田CR-V', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c228', name: '丰田RAV4', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c229', name: '大众途观', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c230', name: '福特探险者', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c231', name: '雪佛兰开拓者', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c232', name: '现代途胜', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c233', name: '起亚智跑', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c234', name: '日产奇骏', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c235', name: '三菱欧蓝德', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c236', name: '斯巴鲁森林人', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c237', name: '奥迪Q5L', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c238', name: '奔驰GLC', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c239', name: '宝马X3', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c240', name: '沃尔沃XC60', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c241', name: '雷克萨斯RX', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c242', name: '英菲尼迪QX50', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c243', name: '讴歌RDX', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c244', name: '凯迪拉克XT5', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c245', name: '林肯冒险家', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c246', name: '捷豹E-PACE', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c247', name: '路虎发现运动版', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c248', name: '保时捷Macan', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c249', name: '玛莎拉蒂Levante', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c250', name: '阿尔法·罗密欧Stelvio', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c251', name: '特斯拉Model Y', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c252', name: '比亚迪宋PLUS', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c253', name: '蔚来ES6', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c254', name: '小鹏G3', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c255', name: '理想ONE', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c256', name: '吉利星越', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c257', name: '长城哈弗大狗', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c258', name: '领克05', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c259', name: '红旗HS5', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c260', name: '奇瑞瑞虎8', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c261', name: '长安CS75 PLUS', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c262', name: '传祺GS4', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c263', name: '荣威RX5', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c264', name: '名爵HS', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c265', name: '五菱宏光MINI EV', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c266', name: '长安Lumin', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c267', name: '奇瑞QQ冰淇淋', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c268', name: '欧拉好猫', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c269', name: '零跑T03', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c270', name: '哪吒V', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c271', name: '威马EX5', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c272', name: '几何A', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c273', name: '埃安AION S', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c274', name: '极狐阿尔法S', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c275', name: '飞凡F7', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c276', name: '智己LS6', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c277', name: '阿维塔12', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c278', name: '极氪X', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c279', name: '问界M5', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c280', name: '腾势X', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c281', name: '魏牌摩卡', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c282', name: '坦克400', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c283', name: '捷途X90', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c284', name: '星途凌云', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c285', name: '长安UNI-V', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c286', name: '传祺M8', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c287', name: '荣威iMAX8', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c288', name: '名爵MG ONE', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c289', name: '五菱缤果', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c290', name: '东风风神皓瀚', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c291', name: '深蓝S7', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c292', name: '长安启源Q05', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c293', name: '零跑C01', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c294', name: '哪吒GT', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c295', name: '合创A06', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c296', name: '枫叶80V', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c297', name: '几何E', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c298', name: '埃安AION Y', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c299', name: '极狐阿尔法T', rarity: 'N', rate: 0.0035, image: '🚘' },
+                    { id: 'c300', name: '飞凡R7', rarity: 'N', rate: 0.0035, image: '🚘' }
+                ]
+            },
+            animal: {
+                name: '🐾 动物王国',
+                SSR: [
+                    { id: 'a1', name: '神龙', rarity: 'SSR', rate: 0.006, image: '🐉' },
+                    { id: 'a2', name: '凤凰', rarity: 'SSR', rate: 0.006, image: '🦅' },
+                    { id: 'a3', name: '麒麟', rarity: 'SSR', rate: 0.006, image: '🦄' }
+                ],
+                SR: [
+                    { id: 'a4', name: '白虎', rarity: 'SR', rate: 0.051, image: '🐯' },
+                    { id: 'a5', name: '玄武', rarity: 'SR', rate: 0.051, image: '🐢' },
+                    { id: 'a6', name: '朱雀', rarity: 'SR', rate: 0.051, image: '🦜' },
+                    { id: 'a7', name: '青龙', rarity: 'SR', rate: 0.051, image: '🐲' }
+                ],
+                R: [
+                    { id: 'a8', name: '狼王', rarity: 'R', rate: 0.13, image: '🐺' },
+                    { id: 'a9', name: '狮王', rarity: 'R', rate: 0.13, image: '🦁' },
+                    { id: 'a10', name: '鹰王', rarity: 'R', rate: 0.13, image: '🦅' },
+                    { id: 'a11', name: '熊王', rarity: 'R', rate: 0.13, image: '🐻' },
+                    { id: 'a12', name: '豹王', rarity: 'R', rate: 0.13, image: '🐆' }
+                ],
+                N: [
+                    { id: 'a13', name: '小狗', rarity: 'N', rate: 0.07, image: '🐕' },
+                    { id: 'a14', name: '小猫', rarity: 'N', rate: 0.07, image: '🐈' },
+                    { id: 'a15', name: '小兔', rarity: 'N', rate: 0.07, image: '🐇' },
+                    { id: 'a16', name: '小鸟', rarity: 'N', rate: 0.07, image: '🐦' },
+                    { id: 'a17', name: '小鼠', rarity: 'N', rate: 0.07, image: '🐭' }
+                ]
+            },
+            star: {
+                name: '🌟 星辰幻想',
+                SSR: [
+                    { id: 's1', name: '天蝎座', rarity: 'SSR', rate: 0.006, image: '♏' },
+                    { id: 's2', name: '狮子座', rarity: 'SSR', rate: 0.006, image: '♌' },
+                    { id: 's3', name: '天秤座', rarity: 'SSR', rate: 0.006, image: '♎' }
+                ],
+                SR: [
+                    { id: 's4', name: '双子座', rarity: 'SR', rate: 0.051, image: '♊' },
+                    { id: 's5', name: '处女座', rarity: 'SR', rate: 0.051, image: '♍' },
+                    { id: 's6', name: '射手座', rarity: 'SR', rate: 0.051, image: '♐' },
+                    { id: 's7', name: '水瓶座', rarity: 'SR', rate: 0.051, image: '♒' }
+                ],
+                R: [
+                    { id: 's8', name: '白羊座', rarity: 'R', rate: 0.13, image: '♈' },
+                    { id: 's9', name: '金牛座', rarity: 'R', rate: 0.13, image: '♉' },
+                    { id: 's10', name: '巨蟹座', rarity: 'R', rate: 0.13, image: '♋' },
+                    { id: 's11', name: '摩羯座', rarity: 'R', rate: 0.13, image: '♑' },
+                    { id: 's12', name: '双鱼座', rarity: 'R', rate: 0.13, image: '♓' }
+                ],
+                N: [
+                    { id: 's13', name: '星尘', rarity: 'N', rate: 0.07, image: '✨' },
+                    { id: 's14', name: '月光', rarity: 'N', rate: 0.07, image: '🌙' },
+                    { id: 's15', name: '流星', rarity: 'N', rate: 0.07, image: '☄️' },
+                    { id: 's16', name: '彗星', rarity: 'N', rate: 0.07, image: '💫' },
+                    { id: 's17', name: '星云', rarity: 'N', rate: 0.07, image: '🌌' }
+                ]
+            },
+            hero: {
+                name: '⚔️ 英雄传说',
+                SSR: [
+                    { id: 'h1', name: '剑圣', rarity: 'SSR', rate: 0.006, image: '🗡️' },
+                    { id: 'h2', name: '法师', rarity: 'SSR', rate: 0.006, image: '🧙' },
+                    { id: 'h3', name: '圣骑士', rarity: 'SSR', rate: 0.006, image: '🛡️' }
+                ],
+                SR: [
+                    { id: 'h4', name: '弓箭手', rarity: 'SR', rate: 0.051, image: '🏹' },
+                    { id: 'h5', name: '刺客', rarity: 'SR', rate: 0.051, image: '🗝️' },
+                    { id: 'h6', name: '牧师', rarity: 'SR', rate: 0.051, image: '⚕️' },
+                    { id: 'h7', name: '德鲁伊', rarity: 'SR', rate: 0.051, image: '🌿' }
+                ],
+                R: [
+                    { id: 'h8', name: '战士', rarity: 'R', rate: 0.13, image: '⚔️' },
+                    { id: 'h9', name: '游侠', rarity: 'R', rate: 0.13, image: '🎯' },
+                    { id: 'h10', name: '盗贼', rarity: 'R', rate: 0.13, image: '💰' },
+                    { id: 'h11', name: '猎人', rarity: 'R', rate: 0.13, image: '🏹' },
+                    { id: 'h12', name: '骑士', rarity: 'R', rate: 0.13, image: '🐴' }
+                ],
+                N: [
+                    { id: 'h13', name: '农民', rarity: 'N', rate: 0.07, image: '👨‍🌾' },
+                    { id: 'h14', name: '商人', rarity: 'N', rate: 0.07, image: '👨‍💼' },
+                    { id: 'h15', name: '学徒', rarity: 'N', rate: 0.07, image: '🎓' },
+                    { id: 'h16', name: '侍卫', rarity: 'N', rate: 0.07, image: '💂' },
+                    { id: 'h17', name: '仆从', rarity: 'N', rate: 0.07, image: '🧑' }
+                ]
+            }
+        };
+
+        let currentPack = 'car'; // 当前选中的卡包
+        let tickets = 100;
+        let collection = new Map();
+        let totalDraws = 0;
+        let ssrCount = 0;
+        let srCount = 0;
+
+        // 卡片回收价值（整数返还）
+        const recycleValues = {
+            'SSR': 10,
+            'SR': 3,
+            'R': 1,
+            'N': 1
+        };
+
+        // 选择卡包
+        function selectPack(packId) {
+            currentPack = packId;
+            
+            // 隐藏卡包选择页面，显示抽卡页面
+            document.getElementById('packSelectPage').classList.add('hidden');
+            document.getElementById('gachaPage').classList.remove('hidden');
+            
+            // 更新卡池名称
+            document.getElementById('poolName').textContent = cardPacks[packId].name;
+            
+            // 清空最近抽卡显示
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '<p class="no-results">点击按钮开始抽卡！</p>';
+            
+            // 更新图鉴
+            updatePokedex();
+            
+            // 使用requestAnimationFrame确保DOM完全渲染后再应用响应式布局
+            // 特别对有大量卡片的卡包(如极速车神300张)很重要
+            requestAnimationFrame(() => {
+                applyResponsiveLayout();
+            });
+            
+            // 保存当前卡包
+            saveData();
+        }
+
+        // 返回卡包选择页面
+        function backToPackSelect() {
+            document.getElementById('gachaPage').classList.add('hidden');
+            document.getElementById('packSelectPage').classList.remove('hidden');
+        }
+
+        // 获取当前卡包
+        function getCurrentCardPool() {
+            return cardPacks[currentPack];
+        }
+
+        // 从本地存储加载数据
+        function loadData() {
+            const saved = localStorage.getItem('gachaGameData');
+            if (saved) {
+                const data = JSON.parse(saved);
+                tickets = data.tickets || 100;
+                totalDraws = data.totalDraws || 0;
+                ssrCount = data.ssrCount || 0;
+                srCount = data.srCount || 0;
+                currentPack = data.currentPack || 'car';
+                if (data.collection) {
+                    collection = new Map(data.collection);
+                }
+                updateTickets();
+                updateStats();
+                updateCollection();
+                updatePokedex();
+                
+                // 如果之前已选择卡包，直接进入抽卡页面
+                if (data.hasSelectedPack) {
+                    document.getElementById('packSelectPage').classList.add('hidden');
+                    document.getElementById('gachaPage').classList.remove('hidden');
+                    document.getElementById('poolName').textContent = cardPacks[currentPack].name;
+                }
+            }
+        }
+
+        // 保存数据到本地存储
+        function saveData() {
+            const data = {
+                tickets,
+                totalDraws,
+                ssrCount,
+                srCount,
+                currentPack,
+                hasSelectedPack: !document.getElementById('gachaPage').classList.contains('hidden'),
+                collection: Array.from(collection.entries())
+            };
+            localStorage.setItem('gachaGameData', JSON.stringify(data));
+        }
+
+        // 重置游戏数据
+        function resetGame() {
+            if (!confirm('⚠️ 确定要重置游戏吗？\n\n这将清除所有数据，包括：\n• 抽卡券数量\n• 抽卡记录和统计\n• 所有收藏的卡片\n• 图鉴进度\n\n此操作不可恢复！')) {
+                return;
+            }
+            
+            // 清除本地存储
+            localStorage.removeItem('gachaGameData');
+            
+            // 重置所有变量为初始状态
+            tickets = 100;
+            totalDraws = 0;
+            ssrCount = 0;
+            srCount = 0;
+            currentPack = 'car';
+            collection = new Map();
+            
+            // 更新UI显示
+            updateTickets();
+            updateStats();
+            updateCollection();
+            updatePokedex();
+            
+            // 返回到卡包选择页面
+            document.getElementById('gachaPage').classList.add('hidden');
+            document.getElementById('packSelectPage').classList.remove('hidden');
+            
+            // 清空最近抽卡显示
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '<p class="no-results">点击按钮开始抽卡！</p>';
+            
+            // 显示重置成功提示
+            showNotification('🔄 游戏已重置！祝您好运！');
+        }
+
+        // 更新抽卡券显示
+        function updateTickets() {
+            document.getElementById('tickets').textContent = tickets;
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('totalDraws').textContent = totalDraws;
+            document.getElementById('ssrCount').textContent = ssrCount;
+            document.getElementById('srCount').textContent = srCount;
+            document.getElementById('collectionCount').textContent = collection.size;
+        }
+
+        // 抽卡逻辑
+        function drawCard() {
+            const cardPool = getCurrentCardPool();
+            const allCards = [...cardPool.SSR, ...cardPool.SR, ...cardPool.R, ...cardPool.N];
+            const random = Math.random();
+            let cumulative = 0;
+            
+            for (const card of allCards) {
+                cumulative += card.rate;
+                if (random <= cumulative) {
+                    return { ...card };
+                }
+            }
+            
+            return { ...allCards[allCards.length - 1] };
+        }
+
+        // 抽卡函数
+        function draw(count) {
+            if (tickets < count) {
+                alert('抽卡券不足！');
+                return;
+            }
+
+            // 禁用按钮
+            const buttons = document.querySelectorAll('.draw-btn');
+            buttons.forEach(btn => btn.disabled = true);
+
+            setTimeout(() => {
+                const results = [];
+                let totalRecycleValue = 0;
+                
+                for (let i = 0; i < count; i++) {
+                    const card = drawCard();
+                    results.push(card);
+                    
+                    // 自动回收卡片
+                    const recycleValue = recycleValues[card.rarity];
+                    totalRecycleValue += recycleValue;
+                }
+
+                tickets -= count;
+                tickets += totalRecycleValue; // 自动回收返还
+                totalDraws += count;
+                
+                // 统计稀有度
+                results.forEach(card => {
+                    if (card.rarity === 'SSR') ssrCount++;
+                    if (card.rarity === 'SR') srCount++;
+                    
+                    // 添加到收藏
+                    const key = card.id;
+                    const existing = collection.get(key) || { ...card, count: 0 };
+                    existing.count += 1;
+                    collection.set(key, existing);
+                });
+
+                updateTickets();
+                updateStats();
+                displayResults(results);
+                updateCollection();
+                updatePokedex();
+                // 使用requestAnimationFrame确保DOM完全渲染后再应用响应式布局
+                // 特别对有大量卡片的卡包(如极速车神300张)很重要
+                requestAnimationFrame(() => {
+                    applyResponsiveLayout();
+                });
+                showModal(results, totalRecycleValue);
+                saveData();
+
+                // 重新启用按钮
+                buttons.forEach(btn => btn.disabled = false);
+            }, 100);
+        }
+
+        // 显示抽卡结果
+        function displayResults(results) {
+            const container = document.getElementById('cardsContainer');
+            container.innerHTML = '';
+            
+            results.forEach((card, index) => {
+                const cardElement = createCardElement(card);
+                cardElement.style.animationDelay = `${index * 0.1}s`;
+                container.appendChild(cardElement);
+            });
+        }
+
+        // 创建卡片元素
+        function createCardElement(card, showCount = false, showRecycleBtn = false) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = `card ${card.rarity}`;
+            
+            const value = recycleValues[card.rarity];
+            const totalValue = showCount ? (value * card.count) : value;
+            
+            cardDiv.innerHTML = `
+                <div class="card-image">${card.image}</div>
+                <div class="card-info">
+                    <div class="card-name">${card.name}</div>
+                    <div class="card-rarity">${card.rarity}</div>
+                    ${showCount ? `<div class="card-count">x${card.count}</div>` : ''}
+                    ${showCount ? `<div class="card-value">💎${totalValue}</div>` : ''}
+                    ${showRecycleBtn ? `<button class="recycle-btn" onclick="recycleCard('${card.id}')">回收</button>` : ''}
+                </div>
+            `;
+            
+            return cardDiv;
+        }
+
+        // 回收单张卡片
+        function recycleCard(cardId) {
+            const card = collection.get(cardId);
+            if (!card) return;
+            
+            const value = recycleValues[card.rarity];
+            const totalValue = value * card.count;
+            
+            if (confirm(`确定要回收 ${card.name} x${card.count} 吗？\n将获得 ${totalValue} 抽卡券`)) {
+                tickets += totalValue;
+                collection.delete(cardId);
+                
+                updateTickets();
+                updateStats();
+                updateCollection();
+                updatePokedex();
+                saveData();
+                
+                showNotification(`成功回收！获得 ${totalValue} 💎`);
+            }
+        }
+
+        // 一键回收所有卡片
+        function recycleAll() {
+            if (collection.size === 0) {
+                alert('没有可回收的卡片！');
+                return;
+            }
+            
+            let totalValue = 0;
+            let cardCount = 0;
+            
+            collection.forEach(card => {
+                totalValue += recycleValues[card.rarity] * card.count;
+                cardCount += card.count;
+            });
+            
+            if (confirm(`确定要回收所有 ${cardCount} 张卡片吗？\n将获得 ${totalValue} 抽卡券`)) {
+                tickets += totalValue;
+                collection.clear();
+                
+                updateTickets();
+                updateStats();
+                updateCollection();
+                updatePokedex();
+                saveData();
+                
+                showNotification(`成功回收所有卡片！获得 ${totalValue} 💎`);
+            }
+        }
+
+        // 显示通知
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px 40px;
+                border-radius: 15px;
+                font-size: 1.3em;
+                font-weight: bold;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                z-index: 10000;
+                animation: fadeIn 0.3s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'fadeIn 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 2000);
+        }
+
+        // 更新收藏展示
+        function updateCollection() {
+            const container = document.getElementById('collection');
+            const recycleAllBtn = document.getElementById('recycleAllBtn');
+            
+            if (collection.size === 0) {
+                container.innerHTML = '<p class="no-collection">暂无收藏</p>';
+                recycleAllBtn.style.display = 'none';
+                return;
+            }
+            
+            container.innerHTML = '';
+            recycleAllBtn.style.display = 'block';
+            
+            // 按稀有度排序
+            const sorted = Array.from(collection.values()).sort((a, b) => {
+                const rarityOrder = { 'SSR': 0, 'SR': 1, 'R': 2, 'N': 3 };
+                return rarityOrder[a.rarity] - rarityOrder[b.rarity];
+            });
+            
+            sorted.forEach(card => {
+                const cardElement = createCardElement(card, true, true);
+                container.appendChild(cardElement);
+            });
+        }
+
+        // 更新图鉴
+        function updatePokedex() {
+            const cardPool = getCurrentCardPool();
+            const allCards = [...cardPool.SSR, ...cardPool.SR, ...cardPool.R, ...cardPool.N];
+            
+            const pokedexGrid = document.getElementById('pokedexGrid');
+            pokedexGrid.innerHTML = '';
+            
+            let collectedCount = 0;
+            
+            allCards.forEach(card => {
+                const isCollected = collection.has(card.id);
+                if (isCollected) collectedCount++;
+                
+                const pokedexCard = document.createElement('div');
+                pokedexCard.className = `pokedex-card ${isCollected ? 'unlocked' : 'locked'} ${card.rarity}`;
+                
+                if (isCollected) {
+                    const cardData = collection.get(card.id);
+                    pokedexCard.innerHTML = `
+                        <div class="pokedex-image">${card.image}</div>
+                        <div class="pokedex-name">${card.name}</div>
+                        <div class="pokedex-rarity">${card.rarity}</div>
+                        <div class="pokedex-count">x${cardData.count}</div>
+                    `;
+                } else {
+                    pokedexCard.innerHTML = `
+                        <div class="pokedex-image">${card.image}</div>
+                        <div class="pokedex-name">${card.name}</div>
+                        <div class="pokedex-rarity">${card.rarity}</div>
+                        <div class="pokedex-locked-text">未解锁</div>
+                    `;
+                }
+                
+                pokedexGrid.appendChild(pokedexCard);
+            });
+            
+            // 更新图鉴统计
+            const totalCards = allCards.length;
+            const progress = ((collectedCount / totalCards) * 100).toFixed(1);
+            
+            document.getElementById('pokedexCollected').textContent = collectedCount;
+            document.getElementById('pokedexTotal').textContent = totalCards;
+            document.getElementById('pokedexProgress').textContent = progress + '%';
+        }
+
+        // 显示结果模态框
+        function showModal(results, recycleValue) {
+            const modal = document.getElementById('resultModal');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalBody.innerHTML = '';
+            
+            // 添加回收信息提示
+            const recycleInfo = document.createElement('div');
+            recycleInfo.style.cssText = `
+                text-align: center;
+                padding: 15px;
+                margin-bottom: 15px;
+                background: linear-gradient(135deg, #fff5f7 0%, #f8f9ff 100%);
+                border-radius: 12px;
+                border-left: 4px solid #667eea;
+                box-sizing: border-box;
+            `;
+            recycleInfo.innerHTML = `
+                <div style="font-weight: bold; color: #667eea; margin-bottom: 5px; font-size: 1em;">
+                    💎 自动回收获得
+                </div>
+                <div style="font-size: 1.3em; font-weight: bold; color: #f5576c;">
+                    +${recycleValue} 抽卡券
+                </div>
+                <div style="font-size: 0.85em; color: #666; margin-top: 5px;">
+                    卡片已自动回收并加入图鉴
+                </div>
+            `;
+            modalBody.appendChild(recycleInfo);
+            
+            results.forEach((card, index) => {
+                const cardElement = createCardElement(card);
+                cardElement.style.animationDelay = `${index * 0.1}s`;
+                modalBody.appendChild(cardElement);
+            });
+            
+            modal.style.display = 'block';
+            
+            // 播放音效（如果有SSR）
+            const hasSSR = results.some(card => card.rarity === 'SSR');
+            if (hasSSR) {
+                modal.querySelector('.modal-content').style.animation = 'slideDown 0.3s ease, pulse 0.5s ease';
+            }
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            const modal = document.getElementById('resultModal');
+            modal.style.display = 'none';
+        }
+
+        // 显示更新日志
+        function showChangelog() {
+            const modal = document.getElementById('changelogModal');
+            modal.style.display = 'block';
+        }
+
+        // 关闭更新日志模态框
+        function closeChangelogModal() {
+            const modal = document.getElementById('changelogModal');
+            modal.style.display = 'none';
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const resultModal = document.getElementById('resultModal');
+            const changelogModal = document.getElementById('changelogModal');
+            if (event.target === resultModal) {
+                closeModal();
+            }
+            if (event.target === changelogModal) {
+                closeChangelogModal();
+            }
+        }
+
+        // 初始化
+        loadData();
+        updatePokedex();
+    </script>
+</body>
+</html>
